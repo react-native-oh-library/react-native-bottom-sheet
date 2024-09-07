@@ -178,11 +178,11 @@ export function createBottomSheetScrollableComponent<T, P>(
         gestureType={GESTURE_SOURCE.SCROLLABLE}
         style={styles.container}
       >
-        <NativeViewGestureHandler
+        {/*<NativeViewGestureHandler
           ref={nativeGestureRef}
           enabled={enableContentPanningGesture}
           shouldCancelWhenOutside={false}
-        >
+        >*/}
           <ScrollableComponent
             animatedProps={scrollableAnimatedProps}
             {...rest}
@@ -198,7 +198,9 @@ export function createBottomSheetScrollableComponent<T, P>(
             onContentSizeChange={handleContentSizeChange}
             style={containerStyle}
           />
-        </NativeViewGestureHandler>
+          {/*
+            </NativeViewGestureHandler>
+         */}
       </BottomSheetDraggableView>
     );
     //#endregion
