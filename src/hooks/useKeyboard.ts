@@ -18,11 +18,13 @@ const KEYBOARD_EVENT_MAPPER = {
   KEYBOARD_SHOW: Platform.select({
     ios: 'keyboardWillShow',
     android: 'keyboardDidShow',
+    harmony:'keyboardDidShow',
     default: '',
   }) as KeyboardEventName,
   KEYBOARD_HIDE: Platform.select({
     ios: 'keyboardWillHide',
     android: 'keyboardDidHide',
+    harmony:'keyboardDidHide',
     default: '',
   }) as KeyboardEventName,
 };
