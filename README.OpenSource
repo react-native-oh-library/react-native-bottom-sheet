@@ -1,0 +1,11 @@
+[
+    {
+        "Name": "react-native-bottom-sheet",
+        "License": "MIT License",
+        "License File": "https://github.com/gorhom/react-native-bottom-sheet/blob/master/LICENSE",
+        "Version Number": "4.6.4",
+        "Owner" : "xiafeng@huawei.com",
+        "Upstream URL": "https://github.com/gorhom/react-native-bottom-sheet",
+        "Description": "A performant interactive bottom sheet with fully configurable options 🚀"
+    }
+]
