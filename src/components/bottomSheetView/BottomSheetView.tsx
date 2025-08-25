@@ -1,16 +1,19 @@
 import React, { memo, useEffect, useCallback, useMemo } from 'react';
-import { LayoutChangeEvent, StyleSheet } from 'react-native';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import { type LayoutChangeEvent, View } from 'react-native';
 import { SCROLLABLE_TYPE } from '../../constants';
-import { useBottomSheetInternal } from '../../hooks';
-import type { BottomSheetViewProps } from './types';
+import {
+  useBottomSheetContentContainerStyle,
+  useBottomSheetInternal,
+} from '../../hooks';
 import { print } from '../../utilities';
+import { styles } from './styles';
+import type { BottomSheetViewProps } from './types';
 
 function BottomSheetViewComponent({
   focusHook: useFocusHook = useEffect,
   enableFooterMarginAdjustment = false,
   onLayout,
-  style,
+  style: _providedStyle,
   children,
   ...rest
 }: BottomSheetViewProps) {
@@ -18,32 +21,19 @@ function BottomSheetViewComponent({
   const {
     animatedScrollableContentOffsetY,
     animatedScrollableType,
-    animatedFooterHeight,
     enableDynamicSizing,
     animatedContentHeight,
   } = useBottomSheetInternal();
   //#endregion
 
   //#region styles
-  const containerStylePaddingBottom = useMemo(() => {
-    const flattenStyle = StyleSheet.flatten(style);
-    const paddingBottom =
-      flattenStyle && 'paddingBottom' in flattenStyle
-        ? flattenStyle.paddingBottom
-        : 0;
-    return typeof paddingBottom === 'number' ? paddingBottom : 0;
-  }, [style]);
-  const containerAnimatedStyle = useAnimatedStyle(
-    () => ({
-      paddingBottom: enableFooterMarginAdjustment
-        ? animatedFooterHeight.value + containerStylePaddingBottom
-        : containerStylePaddingBottom,
-    }),
-    [containerStylePaddingBottom, enableFooterMarginAdjustment]
+  const containerStyle = useBottomSheetContentContainerStyle(
+    enableFooterMarginAdjustment,
+    _providedStyle
   );
-  const containerStyle = useMemo(
-    () => [style, containerAnimatedStyle],
-    [style, containerAnimatedStyle]
+  const style = useMemo(
+    () => [containerStyle, styles.container],
+    [containerStyle]
   );
   //#endregion
 
@@ -55,33 +45,37 @@ function BottomSheetViewComponent({
   const handleLayout = useCallback(
     (event: LayoutChangeEvent) => {
       if (enableDynamicSizing) {
-        animatedContentHeight.value = event.nativeEvent.layout.height;
+        animatedContentHeight.set(event.nativeEvent.layout.height);
       }
 
       if (onLayout) {
         onLayout(event);
       }
 
-      print({
-        component: BottomSheetView.displayName,
-        method: 'handleLayout',
-        params: {
-          height: event.nativeEvent.layout.height,
-        },
-      });
+      if (__DEV__) {
+        print({
+          component: BottomSheetView.displayName,
+          method: 'handleLayout',
+          category: 'layout',
+          params: {
+            height: event.nativeEvent.layout.height,
+          },
+        });
+      }
     },
     [onLayout, animatedContentHeight, enableDynamicSizing]
   );
   //#endregion
 
-  // effects
+  //#region effects
   useFocusHook(handleSettingScrollable);
+  //#endregion
 
   //render
   return (
-    <Animated.View onLayout={handleLayout} style={containerStyle} {...rest}>
+    <View {...rest} onLayout={handleLayout} style={style}>
       {children}
-    </Animated.View>
+    </View>
   );
 }
 
