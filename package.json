@@ -1,6 +1,6 @@
 {
-  "name": "@react-native-oh-tpl/bottom-sheet",
-  "version": "4.6.4-0.0.2",
+  "name": "@react-native-ohos/bottom-sheet",
+  "version": "4.6.5-rc.1",
   "description": "A performant interactive bottom sheet with fully configurable options 🚀",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
