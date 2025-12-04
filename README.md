@@ -1,4 +1,4 @@
-# @react-native-oh-tpl/bottom-sheet
+# @react-native-ohos/bottom-sheet
 
 This project is based on [react-native-bottom-sheet](https://github.com/gorhom/react-native-bottom-sheet)
 
