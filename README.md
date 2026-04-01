@@ -4,9 +4,9 @@ This project is based on [react-native-bottom-sheet@v5.1.6](https://github.com/g
 
 ## Documentation
 
-[中文](https://gitee.com/react-native-oh-library/usage-docs/blob/master/zh-cn/gorhom-bottom-sheet.md)
+[中文](https://gitcode.com/OpenHarmony-RN/usage-docs/blob/master/zh-cn/gorhom-bottom-sheet.md)
 
-[English](https://gitee.com/react-native-oh-library/usage-docs/blob/master/en/gorhom-bottom-sheet.md)
+[English](https://gitcode.com/OpenHarmony-RN/usage-docs/blob/master/en/gorhom-bottom-sheet.md)
 
 ## License
 

@@ -2,7 +2,8 @@
 
 ## 鸿蒙化Log
 
-### v5.1.7-rc.1
+### v5.1.7
+- release version 5.1.7
 - pre-release version 5.1.7-rc.1
 
 
