@@ -5,6 +5,7 @@ import type { GestureHandlersHookType } from '../types';
 export interface BottomSheetGestureHandlersContextType {
   contentPanGestureHandler: ReturnType<GestureHandlersHookType>;
   handlePanGestureHandler: ReturnType<GestureHandlersHookType>;
+  scrollablePanGestureHandler: ReturnType<GestureHandlersHookType>;
 }
 
 export const BottomSheetGestureHandlersContext =

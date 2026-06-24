@@ -47,6 +47,16 @@ const BottomSheetGestureHandlersProvider = ({
     handleOnEnd,
     handleOnFinalize
   );
+
+  const scrollablePanGestureHandler = useGestureHandler(
+    GESTURE_SOURCE.SCROLLABLE,
+    animatedContentGestureState,
+    animatedGestureSource,
+    handleOnStart,
+    handleOnChange,
+    handleOnEnd,
+    handleOnFinalize
+  );
   //#endregion
 
   //#region context
@@ -54,9 +64,15 @@ const BottomSheetGestureHandlersProvider = ({
     () => ({
       contentPanGestureHandler,
       handlePanGestureHandler,
+      scrollablePanGestureHandler,
       animatedGestureSource,
     }),
-    [contentPanGestureHandler, handlePanGestureHandler, animatedGestureSource]
+    [
+      contentPanGestureHandler,
+      handlePanGestureHandler,
+      scrollablePanGestureHandler,
+      animatedGestureSource,
+    ]
   );
   //#endregion
   return (

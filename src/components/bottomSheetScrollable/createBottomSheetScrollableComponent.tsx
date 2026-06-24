@@ -4,6 +4,7 @@ import React, {
   useImperativeHandle,
   useMemo,
 } from 'react';
+import { Platform } from 'react-native';
 import { Gesture } from 'react-native-gesture-handler';
 import { useAnimatedProps } from 'react-native-reanimated';
 import {
@@ -67,7 +68,9 @@ export function createBottomSheetScrollableComponent<T, P>(
     const { setContentSize } = useBottomSheetContentSizeSetter();
     //#endregion
 
-    if (!draggableGesture && enableContentPanningGesture) {
+    const isHarmony = (Platform.OS as string) === 'harmony';
+
+    if (!draggableGesture && enableContentPanningGesture && !isHarmony) {
       throw "'Scrollable' cannot be used out of the BottomSheet!";
     }
 

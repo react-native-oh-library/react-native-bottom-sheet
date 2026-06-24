@@ -1,7 +1,13 @@
 import React, { memo, useCallback, useMemo, useRef } from 'react';
-import type { LayoutChangeEvent, View } from 'react-native';
+import {
+  PanResponder,
+  Platform,
+  View,
+  type LayoutChangeEvent,
+} from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated from 'react-native-reanimated';
+import Animated, { runOnUI } from 'react-native-reanimated';
+import { ANIMATION_SOURCE } from '../../constants';
 import {
   type BoundingClientRect,
   useBottomSheetGestureHandlers,
@@ -13,21 +19,42 @@ import { DEFAULT_ENABLE_HANDLE_PANNING_GESTURE } from '../bottomSheet/constants'
 import BottomSheetHandle from './BottomSheetHandle';
 import type { BottomSheetHandleContainerProps } from './types';
 
+function snapPointJS(
+  value: number,
+  velocity: number,
+  points: ReadonlyArray<number>
+) {
+  const point = value + 0.2 * velocity;
+  let minDelta = Number.POSITIVE_INFINITY;
+  let result = points[0];
+
+  for (const snap of points) {
+    const delta = Math.abs(point - snap);
+    if (delta < minDelta) {
+      minDelta = delta;
+      result = snap;
+    }
+  }
+
+  return result;
+}
+
 function BottomSheetHandleContainerComponent({
   animatedIndex,
   animatedPosition,
   simultaneousHandlers: _internalSimultaneousHandlers,
   enableHandlePanningGesture = DEFAULT_ENABLE_HANDLE_PANNING_GESTURE,
+  enableOverDrag,
+  enablePanDownToClose,
+  overDragResistanceFactor,
   handleHeight,
   handleComponent,
   handleStyle: _providedHandleStyle,
   handleIndicatorStyle: _providedIndicatorStyle,
 }: BottomSheetHandleContainerProps) {
-  //#region refs
   const ref = useRef<View>(null);
-  //#endregion
+  const dragStartPosition = useRef(0);
 
-  //#region hooks
   const {
     activeOffsetX,
     activeOffsetY,
@@ -35,12 +62,20 @@ function BottomSheetHandleContainerComponent({
     failOffsetY,
     waitFor,
     simultaneousHandlers: _providedSimultaneousHandlers,
+    animatedSnapPoints,
+    animatedHighestSnapPoint,
+    animatedClosedPosition,
+    animatedContainerHeight,
+    animateToPosition,
+    stopAnimation,
   } = useBottomSheetInternal();
   const { handlePanGestureHandler } = useBottomSheetGestureHandlers();
-  //#endregion
 
-  //#region variables
   const simultaneousHandlers = useMemo<unknown[]>(() => {
+    if (Platform.OS === 'harmony') {
+      return [];
+    }
+
     const refs = [];
 
     if (_internalSimultaneousHandlers) {
@@ -57,6 +92,7 @@ function BottomSheetHandleContainerComponent({
 
     return refs;
   }, [_providedSimultaneousHandlers, _internalSimultaneousHandlers]);
+
   const panGesture = useMemo(() => {
     let gesture = Gesture.Pan()
       .enabled(enableHandlePanningGesture)
@@ -71,7 +107,7 @@ function BottomSheetHandleContainerComponent({
       gesture = gesture.requireExternalGestureToFail(waitFor);
     }
 
-    if (simultaneousHandlers) {
+    if (simultaneousHandlers.length > 0) {
       gesture = gesture.simultaneousWithExternalGesture(
         simultaneousHandlers as never
       );
@@ -107,9 +143,7 @@ function BottomSheetHandleContainerComponent({
     handlePanGestureHandler.handleOnFinalize,
     handlePanGestureHandler.handleOnStart,
   ]);
-  //#endregion
 
-  //#region callbacks
   const handleContainerLayout = useCallback(
     function handleContainerLayout({
       nativeEvent: {
@@ -131,6 +165,7 @@ function BottomSheetHandleContainerComponent({
     },
     [handleHeight]
   );
+
   const handleBoundingClientRect = useCallback(
     ({ height }: BoundingClientRect) => {
       handleHeight.value = height;
@@ -147,21 +182,115 @@ function BottomSheetHandleContainerComponent({
     },
     [handleHeight]
   );
-  //#endregion
 
-  //#region effects
+  const harmonyPanResponder = useMemo(() => {
+    if (Platform.OS !== 'harmony') {
+      return null;
+    }
+
+    return PanResponder.create({
+      onStartShouldSetPanResponder: () => enableHandlePanningGesture,
+      onMoveShouldSetPanResponder: () => enableHandlePanningGesture,
+      onPanResponderGrant: () => {
+        dragStartPosition.current = animatedPosition.value;
+        runOnUI(stopAnimation)();
+      },
+      onPanResponderMove: (_, { dy }) => {
+        const highestSnapPoint = animatedHighestSnapPoint.value;
+        const lowestSnapPoint = enablePanDownToClose
+          ? animatedContainerHeight.value
+          : animatedSnapPoints.value[0];
+        let nextPosition = dragStartPosition.current + dy;
+
+        if (nextPosition < highestSnapPoint) {
+          if (enableOverDrag) {
+            nextPosition =
+              highestSnapPoint -
+              Math.sqrt(1 + (highestSnapPoint - nextPosition)) *
+                overDragResistanceFactor;
+          } else {
+            nextPosition = highestSnapPoint;
+          }
+        } else if (nextPosition > lowestSnapPoint) {
+          if (enableOverDrag) {
+            nextPosition =
+              lowestSnapPoint +
+              Math.sqrt(1 + (nextPosition - lowestSnapPoint)) *
+                overDragResistanceFactor;
+          } else {
+            nextPosition = lowestSnapPoint;
+          }
+        }
+
+        animatedPosition.value = nextPosition;
+      },
+      onPanResponderRelease: (_, { dy, vy }) => {
+        const snapPoints = animatedSnapPoints.value.slice();
+        if (enablePanDownToClose) {
+          snapPoints.unshift(animatedClosedPosition.value);
+        }
+
+        const destinationPoint = snapPointJS(
+          dragStartPosition.current + dy,
+          vy,
+          snapPoints
+        );
+
+        runOnUI(animateToPosition)(
+          destinationPoint,
+          ANIMATION_SOURCE.GESTURE,
+          vy / 2
+        );
+      },
+    });
+  }, [
+    animateToPosition,
+    animatedClosedPosition,
+    animatedContainerHeight,
+    animatedHighestSnapPoint,
+    animatedPosition,
+    animatedSnapPoints,
+    enableHandlePanningGesture,
+    enablePanDownToClose,
+    enableOverDrag,
+    overDragResistanceFactor,
+    stopAnimation,
+  ]);
+
   useBoundingClientRect(ref, handleBoundingClientRect);
-  //#endregion
 
-  //#region renders
   const HandleComponent = handleComponent ?? BottomSheetHandle;
+
+  const handleContainerStyle =
+    Platform.OS === 'harmony'
+      ? { zIndex: 10, width: '100%' as const }
+      : undefined;
+
+  if (Platform.OS === 'harmony') {
+    return (
+      <View
+        ref={ref}
+        key="BottomSheetHandleContainer"
+        collapsable={false}
+        style={handleContainerStyle}
+        onLayout={handleContainerLayout}
+        {...(harmonyPanResponder?.panHandlers ?? {})}>
+        <HandleComponent
+          animatedIndex={animatedIndex}
+          animatedPosition={animatedPosition}
+          style={_providedHandleStyle}
+          indicatorStyle={_providedIndicatorStyle}
+        />
+      </View>
+    );
+  }
+
   return (
     <GestureDetector gesture={panGesture}>
       <Animated.View
         ref={ref}
         onLayout={handleContainerLayout}
-        key="BottomSheetHandleContainer"
-      >
+        key="BottomSheetHandleContainer">
         <HandleComponent
           animatedIndex={animatedIndex}
           animatedPosition={animatedPosition}
@@ -171,7 +300,6 @@ function BottomSheetHandleContainerComponent({
       </Animated.View>
     </GestureDetector>
   );
-  //#endregion
 }
 
 const BottomSheetHandleContainer = memo(BottomSheetHandleContainerComponent);

@@ -171,6 +171,7 @@ export type GestureHandlersHookType = (
   handleOnFinalize: (
     event: GestureStateChangeEvent<PanGestureHandlerEventPayload>
   ) => void;
+  onGestureEvent: (event: unknown) => void;
 };
 
 type ScrollEventHandlerCallbackType<C = never> = (

@@ -1,9 +1,6 @@
 import { Keyboard, Platform } from 'react-native';
-import {
-  runOnJS,
-  useSharedValue,
-  useWorkletCallback,
-} from 'react-native-reanimated';
+import { runOnJS, useSharedValue } from 'react-native-reanimated';
+import { useWorkletCallback } from '../utilities/useWorkletCallback';
 import {
   ANIMATION_SOURCE,
   GESTURE_SOURCE,
@@ -72,6 +69,7 @@ export const useGestureEventsHandlersDefault: GestureEventsHandlersHookType =
     //#region gesture methods
     const handleOnStart: GestureEventHandlerCallbackType = useWorkletCallback(
       function handleOnStart(__, _) {
+        'worklet';
         // cancel current animation
         stopAnimation();
 
@@ -113,6 +111,7 @@ export const useGestureEventsHandlersDefault: GestureEventsHandlersHookType =
     );
     const handleOnChange: GestureEventHandlerCallbackType = useWorkletCallback(
       function handleOnChange(source, { translationY }) {
+        'worklet';
         let highestSnapPoint = animatedHighestSnapPoint.value;
 
         /**
@@ -141,12 +140,16 @@ export const useGestureEventsHandlersDefault: GestureEventsHandlersHookType =
           ? animatedContainerHeight.value
           : animatedSnapPoints.value[0];
 
+        const isContentOrScrollablePan =
+          source === GESTURE_SOURCE.CONTENT ||
+          source === GESTURE_SOURCE.SCROLLABLE;
+
         /**
          * if scrollable is refreshable and sheet position at the highest
          * point, then do not interact with current gesture.
          */
         if (
-          source === GESTURE_SOURCE.CONTENT &&
+          isContentOrScrollablePan &&
           isScrollableRefreshable.value &&
           animatedPosition.value === highestSnapPoint
         ) {
@@ -161,7 +164,7 @@ export const useGestureEventsHandlersDefault: GestureEventsHandlersHookType =
          */
         const negativeScrollableContentOffset =
           (context.value.initialPosition === highestSnapPoint &&
-            source === GESTURE_SOURCE.CONTENT) ||
+            isContentOrScrollablePan) ||
           !context.value.isScrollablePositionLocked
             ? animatedScrollableContentOffsetY.value * -1
             : 0;
@@ -195,7 +198,7 @@ export const useGestureEventsHandlersDefault: GestureEventsHandlersHookType =
          */
         if (
           context.value.isScrollablePositionLocked &&
-          source === GESTURE_SOURCE.CONTENT &&
+          isContentOrScrollablePan &&
           animatedPosition.value === highestSnapPoint
         ) {
           context.value = {
@@ -210,6 +213,7 @@ export const useGestureEventsHandlersDefault: GestureEventsHandlersHookType =
         if (enableOverDrag) {
           if (
             (source === GESTURE_SOURCE.HANDLE ||
+              source === GESTURE_SOURCE.CONTENT ||
               animatedScrollableType.value === SCROLLABLE_TYPE.VIEW) &&
             draggedPosition < highestSnapPoint
           ) {
@@ -234,7 +238,7 @@ export const useGestureEventsHandlersDefault: GestureEventsHandlersHookType =
           }
 
           if (
-            source === GESTURE_SOURCE.CONTENT &&
+            isContentOrScrollablePan &&
             draggedPosition + negativeScrollableContentOffset > lowestSnapPoint
           ) {
             const resistedPosition =
@@ -269,16 +273,21 @@ export const useGestureEventsHandlersDefault: GestureEventsHandlersHookType =
     );
     const handleOnEnd: GestureEventHandlerCallbackType = useWorkletCallback(
       function handleOnEnd(source, { translationY, absoluteY, velocityY }) {
+        'worklet';
         const highestSnapPoint = animatedHighestSnapPoint.value;
         const isSheetAtHighestSnapPoint =
           animatedPosition.value === highestSnapPoint;
+
+        const isContentOrScrollablePan =
+          source === GESTURE_SOURCE.CONTENT ||
+          source === GESTURE_SOURCE.SCROLLABLE;
 
         /**
          * if scrollable is refreshable and sheet position at the highest
          * point, then do not interact with current gesture.
          */
         if (
-          source === GESTURE_SOURCE.CONTENT &&
+          isContentOrScrollablePan &&
           isScrollableRefreshable.value &&
           isSheetAtHighestSnapPoint
         ) {
@@ -371,7 +380,8 @@ export const useGestureEventsHandlersDefault: GestureEventsHandlersHookType =
         }
 
         const wasGestureHandledByScrollView =
-          source === GESTURE_SOURCE.CONTENT &&
+          (source === GESTURE_SOURCE.SCROLLABLE ||
+            source === GESTURE_SOURCE.CONTENT) &&
           animatedScrollableContentOffsetY.value > 0;
         /**
          * prevents snapping from top to middle / bottom with repeated interrupted scrolls
@@ -404,6 +414,7 @@ export const useGestureEventsHandlersDefault: GestureEventsHandlersHookType =
     const handleOnFinalize: GestureEventHandlerCallbackType =
       useWorkletCallback(
         function handleOnFinalize() {
+          'worklet';
           resetContext(context);
         },
         [context]
