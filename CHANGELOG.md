@@ -1,5 +1,10 @@
 # Changelog
 
+## 适配Reanimated 4废弃API变更
+
+### v5.1.8-rc.1
+- pre-release version 5.1.8-rc.1
+
 ## 鸿蒙化Log
 
 ### v5.1.7
