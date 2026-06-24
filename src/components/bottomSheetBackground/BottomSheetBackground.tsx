@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { View } from 'react-native';
-import type { BottomSheetBackgroundProps } from './types';
 import { styles } from './styles';
+import type { BottomSheetBackgroundProps } from './types';
 
 const BottomSheetBackgroundComponent = ({
   pointerEvents,
@@ -12,11 +12,9 @@ const BottomSheetBackgroundComponent = ({
     accessible={true}
     accessibilityRole="adjustable"
     accessibilityLabel="Bottom Sheet"
-    style={[styles.container, style]}
+    style={[styles.background, style]}
   />
 );
 
-const BottomSheetBackground = memo(BottomSheetBackgroundComponent);
+export const BottomSheetBackground = memo(BottomSheetBackgroundComponent);
 BottomSheetBackground.displayName = 'BottomSheetBackground';
-
-export default BottomSheetBackground;

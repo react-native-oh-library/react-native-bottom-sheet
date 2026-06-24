@@ -1,14 +1,15 @@
-import type { ReactElement, ReactNode } from 'react';
-import { ViewStyle } from 'react-native';
-import type Animated from 'react-native-reanimated';
+import type { ReactNode } from 'react';
+import type { ViewStyle } from 'react-native';
+import type { SharedValue } from 'react-native-reanimated';
+import type { BottomSheetProps } from '../bottomSheet/types';
 
 export interface BottomSheetFooterProps {
   /**
    * Calculated footer animated position.
    *
-   * @type Animated.SharedValue<number>
+   * @type SharedValue<number>
    */
-  animatedFooterPosition: Animated.SharedValue<number>;
+  animatedFooterPosition: SharedValue<number>;
 }
 
 export interface BottomSheetDefaultFooterProps extends BottomSheetFooterProps {
@@ -31,7 +32,10 @@ export interface BottomSheetDefaultFooterProps extends BottomSheetFooterProps {
   /**
    * Component to be placed in the footer.
    *
-   * @type {ReactNode | ReactNode[] | (() => ReactElement)}
+   * @type {ReactNode|ReactNode[]}
    */
-  children?: ReactNode | ReactNode[] | (() => ReactElement);
+  children?: ReactNode | ReactNode[];
 }
+
+export interface BottomSheetFooterContainerProps
+  extends Required<Pick<BottomSheetProps, 'footerComponent'>> {}
